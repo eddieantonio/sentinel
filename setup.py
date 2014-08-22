@@ -1,6 +1,8 @@
 from distutils.core import setup
 from sentinel import __version__ as VERSION
 
+with open('README.rst') as readme:
+    long_description = readme.read()
 
 setup(
     name='sentinel',
@@ -10,7 +12,7 @@ setup(
     author='Eddie Antonio Santos',
     author_email='easantos@ualberta.ca',
     description='Create sentinel objects',
-    long_description=open('README.rst').read(),
+    long_description=long_description,
     py_modules=['sentinel'],
     platforms='any',
     classifiers=[
