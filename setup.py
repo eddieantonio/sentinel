@@ -5,7 +5,7 @@ from sentinel import __version__ as VERSION
 setup(
     name='sentinel',
     version=VERSION,
-    url='https://github.com/eddieantonio/perfection',
+    url='https://github.com/eddieantonio/sentinel',
     license='MIT',
     author='Eddie Antonio Santos',
     author_email='easantos@ualberta.ca',
