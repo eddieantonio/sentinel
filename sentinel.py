@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-sentinel -- create sentinel objects.
+Create sentinel and singleton objects.
 
 Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 """
@@ -11,6 +11,7 @@ import inspect
 
 __all__ = ['create']
 __version__ = '0.1.0'
+
 
 def get_caller_module():
     """
@@ -24,6 +25,7 @@ def get_caller_module():
     caller = stack[2][0]
     return caller.f_globals['__name__']
 
+
 def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     """
     create(name, mro=(object,), extra_methods={}, ...) -> Sentinel instance
@@ -31,19 +33,40 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     Creates a new sentinel instance. This is a singleton instance kind of like
     the builtin None, and Ellipsis.
 
+    Method resolution order (MRO) for the anonymous class can be specified
+    (i.e., it can be a subclass). Provide the mro as tuple of all classes that
+    it inherits from. If only one class, provide a 1-tuple: e.g., (Cls,).
+
+    Additionally extra class attributes, such as methods can be provided in the 
+    extra_methods dict. The following methods are provided, but can be
+    overridden:
+
+        __repr__()
+            Returns the class name, similar to None and Ellipsis.
+        __copy__()
+        __deepcopy__()
+            Always return the same singleton instance such that
+            ``copy(Sentinel) is Sentinel`` is true.
+        __reduce__()
+            Provided for proper pickling prowess. That is,
+            ``pickle.loads(pickle.dumps(Sentinel)) is Sentinel`` is
+            true.
+
+    Finally, the remain arguments are passed to the super class __init__().
+    This is helpful when for instantiating base classes such as tuple.
     """
 
     cls_dict = {}
 
     cls_dict.update(
         # Provide a nice, clean, self-documenting __repr__
-        __repr__ = lambda self: name,
+        __repr__=lambda self: name,
         # Provide a copy and deepcopy implementation which simply return the
         # same exact instance.
-        __deepcopy__ = lambda self, _memo: self,
-        __copy__ = lambda self: self,
+        __deepcopy__=lambda self, _memo: self,
+        __copy__=lambda self: self,
         # Provide a hook for pickling the sentinel.
-        __reduce__ = lambda self: name
+        __reduce__=lambda self: name
     )
 
     cls_dict.update(extra_methods)
@@ -56,4 +79,3 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
 
     # Return the singleton instance of this new, "anonymous" type.
     return anon_type(*args, **kwargs)
-
