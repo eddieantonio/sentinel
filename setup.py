@@ -11,7 +11,7 @@ setup(
     license='MIT',
     author='Eddie Antonio Santos',
     author_email='easantos@ualberta.ca',
-    description='Create sentinel objects',
+    description='Create sentinel and singleton objects',
     long_description=long_description,
     py_modules=['sentinel'],
     platforms='any',
