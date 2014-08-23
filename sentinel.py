@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Create sentinel and singleton objects.
+Create sentinel nodes and singleton objects.
 
 Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 """
@@ -10,7 +10,7 @@ Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 import inspect
 
 __all__ = ['create']
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 def get_caller_module():
@@ -30,16 +30,17 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     """
     create(name, mro=(object,), extra_methods={}, ...) -> Sentinel instance
 
-    Creates a new sentinel instance. This is a singleton instance kind of like
-    the builtin None, and Ellipsis.
+    Creates a new sentinel instance. This is a singleton instance kind
+    of like the builtin None, and Ellipsis.
 
-    Method resolution order (MRO) for the anonymous class can be specified
-    (i.e., it can be a subclass). Provide the mro as tuple of all classes that
-    it inherits from. If only one class, provide a 1-tuple: e.g., (Cls,).
+    Method resolution order (MRO) for the anonymous class can be
+    specified (i.e., it can be a subclass). Provide the mro as tuple of
+    all classes that it inherits from. If only one class, provide a
+    1-tuple: e.g., (Cls,).
 
-    Additionally extra class attributes, such as methods can be provided in the 
-    extra_methods dict. The following methods are provided, but can be
-    overridden:
+    Additionally extra class attributes, such as methods can be provided
+    in the extra_methods dict. The following methods are provided, but
+    can be overridden:
 
         __repr__()
             Returns the class name, similar to None and Ellipsis.
@@ -52,8 +53,9 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
             ``pickle.loads(pickle.dumps(Sentinel)) is Sentinel`` is
             true.
 
-    Finally, the remain arguments are passed to the super class __init__().
-    This is helpful when for instantiating base classes such as tuple.
+    Finally, the remain arguments and keyword arguments are passed to
+    the super class's __init__().  This is helpful when for
+    instantiating base classes such as a tuple.
     """
 
     cls_dict = {}
@@ -68,6 +70,11 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
         # Provide a hook for pickling the sentinel.
         __reduce__=lambda self: name
     )
+
+    # If the default MRO is given, then it's safe to prevent the singleton
+    # instance from having a instance dictionary.
+    if mro == (object,):
+        cls_dict.update(__slots__=())
 
     cls_dict.update(extra_methods)
 
