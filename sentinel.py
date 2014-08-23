@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Create sentinel nodes and singleton objects.
+Create sentinel and singleton objects.
 
 Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 """

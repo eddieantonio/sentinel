@@ -1,6 +1,6 @@
-======================================================
-sentinel ­ create sentinel nodes and singleton objects
-======================================================
+================================================
+sentinel — create sentinel and singleton objects
+================================================
 
 Creates simple sentinel objects which are the only instance of their own
 anonymous class. As a singleton, there is a guarantee that there will only
@@ -45,8 +45,8 @@ Alternatively, using ``dict.get()`` when fetching values::
 It's known immediately which value was missing from the dictionary in a
 self-documenting manner.
 
-Advanced Usage
---------------
+Adding extra methods and class attributes
+-----------------------------------------
 
 Sentinels may also inherit from base classes, or implement extra methods.
 
@@ -94,15 +94,16 @@ Example usage::
         ...
     KeyError: 2
 
-Advanced usage 2
-----------------
+Inheriting from a base class
+----------------------------
 
 Another usage is inheriting from a tuple, in order to do tuple comparison. For
 example, consider a scenario where a certain order must be maintained, but
 ordering matters. If the key being used to sort is an integer, a plain
-``object`` instance will always sort greater::
+``object`` instance will always sort greater (in Python 2—see below for
+`Python 3 fix`_)::
 
-    >>> (1, ..., ...) < (object(), None, None)
+    >>> (1, [], []) < (object(), None, None)
     True
 
 Now say we want to encode this in a neat, self-documenting package. This is
@@ -115,8 +116,59 @@ instantiated with the given tuple::
 This will call ``tuple((object(), None, None))``. This means the singleton
 will now behave exactly as expected::
 
+    >>> (1, [], []) < AlwaysGreater
+    True
+
+Python 3 fix
+------------
+
+An ``int`` and any old ``object`` are no longer comparable in Python 3::
+
+    >>> (1, ..., ...) < (object(), None, None)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: unorderable types: int() < object()
+
+This makes the above example more difficult. Luckily, sentinels can easily fix
+this. Creating a sentinel that is always less than any number::
+
+    IntInfinity = sentinel.create('IntInfinity', (int,), extra_methods={
+        '__lt__': lambda self, other: False,
+        '__gt__': lambda self, other: True,
+        '__ge__': lambda self, other: True,
+        '__le__': lambda self, other: True if self is other else False
+    })
+
+Since we inherit from ``int``, it is, for all intents and purposes, an
+``int``::
+
+    >>> isinstance(MinInf, int)
+    True
+    >>> IntInfinity > 10 ** 1000
+    True
+    >>> 10 ** 1000 > IntInfinity
+    False
+
+Note that if not provided any explicit instantiation, it is equal to ``0``::
+
+    >>> IntInfinity == 0
+    True
+    >>> bool(IntInfinity)
+    False
+    >>> IntInfinity + 8
+    8
+
+Nonetheless, it serves its purpose in our example::
+
+    arg = (IntInfinity, None, None)
+    AlwaysGreater = sentinel.create('AlwaysGreater', (tuple,), {}, arg)
+
+Usage::
+
     >>> (1, ..., ...) < AlwaysGreater
     True
+    >>> AlwaysGreater < (1, ..., ...)
+    False
 
 .. _Sentinels: http://en.wikipedia.org/wiki/Sentinel_nodes
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
