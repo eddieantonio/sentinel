@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 from sentinel import __version__ as VERSION
 from codecs import open
 
