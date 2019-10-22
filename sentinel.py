@@ -10,7 +10,7 @@ Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 import inspect
 
 __all__ = ['create']
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 def get_caller_module():

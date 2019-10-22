@@ -1,7 +1,8 @@
 from distutils.core import setup
 from sentinel import __version__ as VERSION
+from codecs import open
 
-with open('README.rst') as readme:
+with open('README.rst', encoding='UTF-8') as readme:
     long_description = readme.read()
 
 setup(
