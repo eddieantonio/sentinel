@@ -4,31 +4,50 @@
 """
 Create sentinel and singleton objects.
 
-Copyright 2014 © Eddie Antonio Santos. MIT licensed.
+ Copyright 2014 © Eddie Antonio Santos. MIT licensed.
+
+ This software is released under the MIT License.
+ https://opensource.org/licenses/MIT
 """
 
 import inspect
+from typing import Dict, Tuple, Optional, Any
 
 __all__ = ['create']
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
+class _SentinelMeta(type):
+    def __call__(cls, *args:Tuple[Any], **kwargs:Dict[str, Any]) -> object:
+        inst = _sinstances.get(cls)
+        if inst is None:
+            inst = type.__call__(cls, *args, **kwargs)
+            _sinstances[cls] = inst
 
-def get_caller_module():
-    """
-    Returns the name of the caller's module as a string.
+        return inst
 
-    >>> get_caller_module()
-    '__main__'
-    """
+_sinstances: Dict[_SentinelMeta, object] = {}
+_SentinelMeta.instance = property(fget=_sinstances.get, doc="""Gets the instance of this sentinel type""")
+
+__mro_immortal = (object, )
+# pylint: disable=invalid-name
+__cls_meta_immortal = _SentinelMeta
+# pylint: enable=invalid-name
+
+def _get_caller_module() -> Optional[str]:
     stack = inspect.stack()
     assert len(stack) > 1
+
     caller = stack[2][0]
-    return caller.f_globals['__name__']
+    return caller.f_globals.get('__name__')
 
+def _sentinel_failing_new(cls:_SentinelMeta, *args:Tuple[Any], **kwargs:Dict[str, Any]):
+    raise TypeError('This sentinel object can not be allocated more than once')
 
-def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
+def create(
+    name:str, mro:Tuple[type]=__mro_immortal, cls_dict:Dict[str, Any]=None, *args:Tuple[Any], **kwargs:Dict[str, Any]
+    ) -> object:
     """
-    create(name, mro=(object,), extra_methods={}, ...) -> Sentinel instance
+    create(name, mro=(object,), cls_dict=None, ...) -> Sentinel instance
 
     Creates a new sentinel instance. This is a singleton instance kind
     of like the builtin None, and Ellipsis.
@@ -39,7 +58,7 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     1-tuple: e.g., (Cls,).
 
     Additionally extra class attributes, such as methods can be provided
-    in the extra_methods dict. The following methods are provided, but
+    in the cls_dict dict. The following methods are provided, but
     can be overridden:
 
         __repr__()
@@ -58,31 +77,37 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     instantiating base classes such as a tuple.
     """
 
-    cls_dict = {}
+    _cls_dict = {
+        '__module__': _get_caller_module(),
+        '__repr__': lambda _: name,
+        '__reduce__': lambda _: name,
+        '__copy__': lambda self: self,
+        '__deepcopy__': lambda self, _: self
+    }
+    if mro == __mro_immortal:
+        mro = ()
+        _cls_dict['__slots__'] = ()
+    elif object in mro:
+        assert mro[-1] is object # object is ALWAYS the last type in a mro
+        mro = mro[:-1] # Slice off object from the mro list
 
-    cls_dict.update(
-        # Provide a nice, clean, self-documenting __repr__
-        __repr__=lambda self: name,
-        # Provide a copy and deepcopy implementation which simply return the
-        # same exact instance.
-        __deepcopy__=lambda self, _memo: self,
-        __copy__=lambda self: self,
-        # Provide a hook for pickling the sentinel.
-        __reduce__=lambda self: name
-    )
+    cls_type = __cls_meta_immortal
+    for tp in mro:
+        # pylint: disable=unidiomatic-typecheck
+        if type(tp) is not type:
+            # pylint: disable=inconsistent-mro
+            class _SentinelMeta(type(tp), __cls_meta_immortal):
+                pass
 
-    # If the default MRO is given, then it's safe to prevent the singleton
-    # instance from having a instance dictionary.
-    if mro == (object,):
-        cls_dict.update(__slots__=())
+            cls_type = _SentinelMeta
+            break
+        # pylint: enable=inconsistent-mro, unidiomatic-typecheck
 
-    cls_dict.update(extra_methods)
+    if cls_dict is not None:
+        _cls_dict.update(cls_dict)
+    _sentinel = cls_type('_Sentinel', mro, _cls_dict)
 
-    anon_type = type(name, mro, cls_dict)
+    inst = _sentinel(*args, **kwargs)
+    _sentinel.__new__ = _sentinel_failing_new
 
-    # Stack introspection -- make the singleton always belong to the module of
-    # its caller. If we don't do this, pickling using __reduce__() will fail!
-    anon_type.__module__ = get_caller_module()
-
-    # Return the singleton instance of this new, "anonymous" type.
-    return anon_type(*args, **kwargs)
+    return inst

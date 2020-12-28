@@ -1,6 +1,5 @@
 from setuptools import setup
 from sentinel import __version__ as VERSION
-from codecs import open
 
 with open('README.rst', encoding='UTF-8') as readme:
     long_description = readme.read()
@@ -16,6 +15,7 @@ setup(
     long_description=long_description,
     py_modules=['sentinel'],
     platforms='any',
+    python_requires='>=3.6',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

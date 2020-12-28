@@ -1,6 +1,6 @@
-================================================
+=================================================
 sentinel — create sentinel and singleton objects
-================================================
+=================================================
 
 Creates simple sentinel objects which are the only instance of their own
 anonymous class. As a singleton, there is a guarantee that there will only
@@ -172,4 +172,3 @@ Usage::
 
 .. _Sentinels: http://en.wikipedia.org/wiki/Sentinel_nodes
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
-
