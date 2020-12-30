@@ -1,0 +1,26 @@
+# Publishes a Python package to PyPI when a GitHub release is created
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install Poetry
+      run: |
+        python -m pip install poetry
+    - name: Build and publish
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_UPLOAD_TOKEN }}
+      run: |
+        poetry publish --build
