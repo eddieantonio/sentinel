@@ -4,14 +4,18 @@
 """
 Create sentinel and singleton objects.
 
- Copyright 2014 © Eddie Antonio Santos. MIT licensed.
+Copyright 2014, 2020 © Eddie Antonio Santos. MIT licensed.
 
- This software is released under the MIT License.
- https://opensource.org/licenses/MIT
+With contributions from:
+ - Simeon Visser (https://github.com/svisser)
+ - WildCard65 (https://github.com/WildCard65)
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT
 """
 
 import inspect
-from typing import Dict, Tuple, Optional, Any
+from typing import Any, Dict, Optional, Tuple
 
 __all__ = ["create"]
 __version__ = "0.2.0"
