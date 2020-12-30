@@ -29,7 +29,7 @@ jobs:
         poetry install
     - name: Format with Black
       run: |
-        black --check --diff
+        poetry run black --check --diff
     - name: Test with pytest
       run: |
-        pytest
+        poetry run pytest
