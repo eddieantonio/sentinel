@@ -77,12 +77,13 @@ def create(
         '__copy__': lambda self: self,
         '__deepcopy__': lambda self, _: self
     }
+
     if mro == _DEFAULT_MRO:
-        mro = ()
+        # Add an empty slots tuple if we're only inheritting from 'object'
         _cls_dict['__slots__'] = ()
     elif object in mro:
+        # Validate if object is the last type in the provided mro list.
         assert mro[-1] is object, "object should ALWAYS the last type in a mro"
-        mro = mro[:-1] # Slice off object from the mro list
 
     class _SentinelMeta(type(mro[0])): # Inherit from the base type of the first type.
         instance = property(fget=_sinstances.get, doc="""Gets the instance of this sentinel type.""")
@@ -91,7 +92,7 @@ def create(
             try:
                 return _sinstances[self]
             except KeyError:
-                inst = super(_SentinelMeta, self).__call__(*args, **kwargs) # We use super() incase __call__ was overriden.
+                inst = super().__call__(*args, **kwargs) # We use super() incase __call__ was overriden.
                 _sinstances[self] = inst
 
                 return inst
