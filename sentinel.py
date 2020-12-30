@@ -14,24 +14,11 @@ import inspect
 from typing import Dict, Tuple, Optional, Any
 
 __all__ = ['create']
-__version__ = '0.1.3'
+__version__ = '0.2.0'
 
-class _SentinelMeta(type):
-    def __call__(cls, *args:Tuple[Any], **kwargs:Dict[str, Any]) -> object:
-        inst = _sinstances.get(cls)
-        if inst is None:
-            inst = type.__call__(cls, *args, **kwargs)
-            _sinstances[cls] = inst
+_sinstances: Dict[type, object] = {}
 
-        return inst
-
-_sinstances: Dict[_SentinelMeta, object] = {}
-_SentinelMeta.instance = property(fget=_sinstances.get, doc="""Gets the instance of this sentinel type""")
-
-__mro_immortal = (object, )
-# pylint: disable=invalid-name
-__cls_meta_immortal = _SentinelMeta
-# pylint: enable=invalid-name
+_DEFAULT_MRO = (object, )
 
 def _get_caller_module() -> Optional[str]:
     stack = inspect.stack()
@@ -40,11 +27,11 @@ def _get_caller_module() -> Optional[str]:
     caller = stack[2][0]
     return caller.f_globals.get('__name__')
 
-def _sentinel_failing_new(cls:_SentinelMeta, *args:Tuple[Any], **kwargs:Dict[str, Any]):
+def _sentinel_failing_new(cls: type, *args:Tuple[Any, ...], **kwargs:Dict[str, Any]):
     raise TypeError('This sentinel object can not be allocated more than once')
 
 def create(
-    name:str, mro:Tuple[type]=__mro_immortal, cls_dict:Dict[str, Any]=None, *args:Tuple[Any], **kwargs:Dict[str, Any]
+    name:str, mro:Tuple[type, ...]=_DEFAULT_MRO, cls_dict:Dict[str, Any]=None, *args:Tuple[Any, ...], **kwargs:Dict[str, Any]
     ) -> object:
     """
     create(name, mro=(object,), cls_dict=None, ...) -> Sentinel instance
@@ -78,34 +65,40 @@ def create(
     """
 
     _cls_dict = {
+        # make the singleton always belong to the module of its caller.
+        # If we don't do this, pickling using __reduce__() will fail!
         '__module__': _get_caller_module(),
+        # Provide a nice, clean, self-documenting __repr__
         '__repr__': lambda _: name,
+        # Provide a hook for pickling the sentinel.
         '__reduce__': lambda _: name,
+        # Provide a copy and deepcopy implementation which simply return the
+        # same exact instance.
         '__copy__': lambda self: self,
         '__deepcopy__': lambda self, _: self
     }
-    if mro == __mro_immortal:
+    if mro == _DEFAULT_MRO:
         mro = ()
         _cls_dict['__slots__'] = ()
     elif object in mro:
-        assert mro[-1] is object # object is ALWAYS the last type in a mro
+        assert mro[-1] is object, "object should ALWAYS the last type in a mro"
         mro = mro[:-1] # Slice off object from the mro list
 
-    cls_type = __cls_meta_immortal
-    for tp in mro:
-        # pylint: disable=unidiomatic-typecheck
-        if type(tp) is not type:
-            # pylint: disable=inconsistent-mro
-            class _SentinelMeta(type(tp), __cls_meta_immortal):
-                pass
+    class _SentinelMeta(type(mro[0])): # Inherit from the base type of the first type.
+        instance = property(fget=_sinstances.get, doc="""Gets the instance of this sentinel type.""")
 
-            cls_type = _SentinelMeta
-            break
-        # pylint: enable=inconsistent-mro, unidiomatic-typecheck
+        def __call__(self, *args: Tuple[Any, ...], **kwargs:Dict[str, Any]) -> object:
+            try:
+                return _sinstances[self]
+            except KeyError:
+                inst = super(_SentinelMeta, self).__call__(*args, **kwargs) # We use super() incase __call__ was overriden.
+                _sinstances[self] = inst
+
+                return inst
 
     if cls_dict is not None:
         _cls_dict.update(cls_dict)
-    _sentinel = cls_type('_Sentinel', mro, _cls_dict)
+    _sentinel = _SentinelMeta('_Sentinel', mro, _cls_dict)
 
     inst = _sentinel(*args, **kwargs)
     _sentinel.__new__ = _sentinel_failing_new
