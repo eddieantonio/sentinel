@@ -4,31 +4,37 @@
 """
 Create sentinel and singleton objects.
 
-Copyright 2014 © Eddie Antonio Santos. MIT licensed.
+ Copyright 2014 © Eddie Antonio Santos. MIT licensed.
+
+ This software is released under the MIT License.
+ https://opensource.org/licenses/MIT
 """
 
 import inspect
+from typing import Dict, Tuple, Optional, Any
 
 __all__ = ['create']
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 
+_sinstances: Dict[type, object] = {}
 
-def get_caller_module():
-    """
-    Returns the name of the caller's module as a string.
+_DEFAULT_MRO = (object, )
 
-    >>> get_caller_module()
-    '__main__'
-    """
+def _get_caller_module() -> Optional[str]:
     stack = inspect.stack()
     assert len(stack) > 1
+
     caller = stack[2][0]
-    return caller.f_globals['__name__']
+    return caller.f_globals.get('__name__')
 
+def _sentinel_failing_new(cls: type, *args:Tuple[Any, ...], **kwargs:Dict[str, Any]):
+    raise TypeError('This sentinel object can not be allocated more than once')
 
-def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
+def create(
+    name:str, mro:Tuple[type, ...]=_DEFAULT_MRO, cls_dict:Dict[str, Any]=None, *args:Tuple[Any, ...], **kwargs:Dict[str, Any]
+    ) -> object:
     """
-    create(name, mro=(object,), extra_methods={}, ...) -> Sentinel instance
+    create(name, mro=(object,), cls_dict=None, ...) -> Sentinel instance
 
     Creates a new sentinel instance. This is a singleton instance kind
     of like the builtin None, and Ellipsis.
@@ -39,7 +45,7 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     1-tuple: e.g., (Cls,).
 
     Additionally extra class attributes, such as methods can be provided
-    in the extra_methods dict. The following methods are provided, but
+    in the cls_dict dict. The following methods are provided, but
     can be overridden:
 
         __repr__()
@@ -58,31 +64,44 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
     instantiating base classes such as a tuple.
     """
 
-    cls_dict = {}
-
-    cls_dict.update(
+    _cls_dict = {
+        # make the singleton always belong to the module of its caller.
+        # If we don't do this, pickling using __reduce__() will fail!
+        '__module__': _get_caller_module(),
         # Provide a nice, clean, self-documenting __repr__
-        __repr__=lambda self: name,
+        '__repr__': lambda _: name,
+        # Provide a hook for pickling the sentinel.
+        '__reduce__': lambda _: name,
         # Provide a copy and deepcopy implementation which simply return the
         # same exact instance.
-        __deepcopy__=lambda self, _memo: self,
-        __copy__=lambda self: self,
-        # Provide a hook for pickling the sentinel.
-        __reduce__=lambda self: name
-    )
+        '__copy__': lambda self: self,
+        '__deepcopy__': lambda self, _: self
+    }
 
-    # If the default MRO is given, then it's safe to prevent the singleton
-    # instance from having a instance dictionary.
-    if mro == (object,):
-        cls_dict.update(__slots__=())
+    if mro == _DEFAULT_MRO:
+        # Add an empty slots tuple if we're only inheritting from 'object'
+        _cls_dict['__slots__'] = ()
+    elif object in mro:
+        # Validate if object is the last type in the provided mro list.
+        assert mro[-1] is object, "object should ALWAYS the last type in a mro"
 
-    cls_dict.update(extra_methods)
+    class _SentinelMeta(type(mro[0])): # Inherit from the base type of the first type.
+        instance = property(fget=_sinstances.get, doc="""Gets the instance of this sentinel type.""")
 
-    anon_type = type(name, mro, cls_dict)
+        def __call__(self, *args: Tuple[Any, ...], **kwargs:Dict[str, Any]) -> object:
+            try:
+                return _sinstances[self]
+            except KeyError:
+                inst = super().__call__(*args, **kwargs) # We use super() incase __call__ was overriden.
+                _sinstances[self] = inst
 
-    # Stack introspection -- make the singleton always belong to the module of
-    # its caller. If we don't do this, pickling using __reduce__() will fail!
-    anon_type.__module__ = get_caller_module()
+                return inst
 
-    # Return the singleton instance of this new, "anonymous" type.
-    return anon_type(*args, **kwargs)
+    if cls_dict is not None:
+        _cls_dict.update(cls_dict)
+    _sentinel = _SentinelMeta('_Sentinel', mro, _cls_dict)
+
+    inst = _sentinel(*args, **kwargs)
+    _sentinel.__new__ = _sentinel_failing_new
+
+    return inst
