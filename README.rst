@@ -2,6 +2,8 @@
 sentinel — create sentinel and singleton objects
 *************************************************
 
+|Tests| |PyPI version|
+
 .. |Tests| image:: https://github.com/eddieantonio/sentinel/workflows/Python%20package/badge.svg
    :target: https://github.com/eddieantonio/sentinel/actions?query=workflow%3A%22Python+package%22
 .. |PyPI version| image:: https://img.shields.io/pypi/v/sentinel
