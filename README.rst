@@ -2,6 +2,11 @@
 sentinel — create sentinel and singleton objects
 *************************************************
 
+.. |Tests| image:: https://github.com/eddieantonio/sentinel/workflows/Python%20package/badge.svg
+   :target: https://github.com/eddieantonio/sentinel/actions?query=workflow%3A%22Python+package%22
+.. |PyPI version| image:: https://img.shields.io/pypi/v/sentinel
+   :target: https://pypi.org/project/sentinel/
+
 Creates simple sentinel objects which are the only instance of their own
 anonymous class. As a singleton, there is a guarantee that there will only
 ever be one instance: they can be safely used with ``pickle`` and ``cPickle``
