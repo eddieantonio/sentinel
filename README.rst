@@ -56,13 +56,13 @@ terminate traversal.
 
 To create singleton leaf which implements a ``search`` method and an
 ``is_leaf`` property, you may provide any extra class attributes in the
-``extra_methods`` keyword argument. The following is a full example of both
+``cls_dict`` keyword argument. The following is a full example of both
 the singleton ``Leaf`` and its ``Node`` counterpart::
 
     def _search_leaf(self, key):
         raise KeyError(key)
 
-    Leaf = sentinel.create('Leaf', extra_methods={
+    Leaf = sentinel.create('Leaf', cls_dict={
         'search': _search_leaf,
         'is_leaf': property(lambda self: True)
     })
@@ -75,7 +75,7 @@ the singleton ``Leaf`` and its ``Node`` counterpart::
             self.payload = payload
 
         def search(self, key):
-            if key < self.__key:
+            if key < self.key:
                 return self.left.search(key)
             elif key > self.key:
                 return self.right.search(key)
@@ -132,7 +132,7 @@ An ``int`` and any old ``object`` are no longer comparable in Python 3::
 This makes the above example more difficult. Luckily, sentinels can easily fix
 this. Creating a sentinel that is always less than any number::
 
-    IntInfinity = sentinel.create('IntInfinity', (int,), extra_methods={
+    IntInfinity = sentinel.create('IntInfinity', (int,), cls_dict={
         '__lt__': lambda self, other: False,
         '__gt__': lambda self, other: True,
         '__ge__': lambda self, other: True,
@@ -142,7 +142,7 @@ this. Creating a sentinel that is always less than any number::
 Since we inherit from ``int``, it is, for all intents and purposes, an
 ``int``::
 
-    >>> isinstance(MinInf, int)
+    >>> isinstance(IntInfinity, int)
     True
     >>> IntInfinity > 10 ** 1000
     True
