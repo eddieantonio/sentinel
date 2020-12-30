@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+import pickle
+
 import pytest
 
 import sentinel
+
+# Must be defined at module-level due to limitations in how the pickle module works :/
+Pickleable = sentinel.create("Pickleable")
 
 
 def test_basic_usage():
@@ -88,5 +93,34 @@ def test_always_greater():
     assert (AlwaysGreater < (1, ..., ...)) == False
 
 
-# TODO: test pickling
+def test_new_returns_singleton():
+    """
+    Tests that getting the class and calling it returns the same singleton instance.
+    """
+    ExistingSentinel = sentinel.create("ExistingSentinel")
+    Constructor = type(ExistingSentinel)
+    assert Constructor() is ExistingSentinel
+
+
+def test_pickle(tmp_path):
+    """
+    Save a singleton to a pickle and get it back out.
+    """
+
+    # Just put it everywhere:
+    arbitrary_data_structure = {Pickleable: (Pickleable, [Pickleable])}
+
+    pickle_path = tmp_path / "data.pickle"
+    with pickle_path.open(mode="wb") as fp:
+        pickle.dump(arbitrary_data_structure, fp)
+
+    with pickle_path.open(mode="rb") as fp:
+        unpickled = pickle.load(fp)
+
+    # Open up the data structure
+    assert Pickleable in unpickled
+    assert unpickled[Pickleable][0] is Pickleable
+    assert unpickled[Pickleable][1][0] is Pickleable
+
+
 # TODO: test copy() and deepcopy()
