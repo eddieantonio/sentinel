@@ -1,5 +1,16 @@
+# Python module files
 *.pyc
+__pycache__/
+
+# Packaging files
+/build
 /dist
 MANIFEST
+
+# Linters and static analysis
+.mypy_cache
+
+# Editor files
+.*.sw[po]
 .history/
 .vscode/settings.json
