@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sentinel"
-version = "0.3.0-alpha.0"
+version = "0.3.0-alpha.1"
 description = "Create sentinel objects, akin to None, NotImplemented, Ellipsis"
 authors = ["Eddie Antonio Santos <easantos@ualberta.ca>"]
 license = "MIT"
