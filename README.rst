@@ -53,13 +53,14 @@ If you want to create your own sentinels, use this library! Make your calls to
 Features
 --------
 
- - sentinels are unique
- - sentinels are singletons — the **only** instance of their own anonymous class
- - sentinels can be used with ``is`` comparisons
- - sentinels can be used with ``pickle``
- - sentinels can be used with ``copy.deepcopy``
- - you can **add** arbitrary attributes and methods to sentinels
- - sentinels have a nice, self-documenting ``__repr__``!
+- sentinels are unique
+- sentinels are singletons — the **only** instance of their own anonymous class
+- sentinels can be used with ``is`` comparisons
+- sentinels can be used with ``pickle``
+- sentinels can be used with ``copy.deepcopy``
+- you can **add** arbitrary attributes and methods to sentinels
+- sentinels have a nice, self-documenting ``__repr__``!
+
 
 Usage
 =====
