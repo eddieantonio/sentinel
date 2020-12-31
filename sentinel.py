@@ -38,7 +38,7 @@ def _sentinel_failing_new(cls: type, *args: Tuple[Any, ...], **kwargs: Dict[str,
 
 
 def create(
-    name: str,
+    name: str = None,
     mro: Tuple[type, ...] = _DEFAULT_MRO,
     cls_dict: Dict[str, Any] = None,
     *args: Tuple[Any, ...],
@@ -74,6 +74,17 @@ def create(
     the super class's __init__().  This is helpful when for
     instantiating base classes such as a tuple.
     """
+
+    if name is None:
+        try:
+            from varname import varname  # type: ignore
+        except ImportError as error:
+            raise ImportError(
+                "Cannot infer variable name without varname library; "
+                "please install the varname PyPI package to enable this feature: "
+                "pip install sentinel[varname]"
+            ) from error
+        name = varname()
 
     _cls_dict = {
         # make the singleton always belong to the module of its caller.

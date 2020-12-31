@@ -142,3 +142,15 @@ def test_copy():
     assert copied[Copyable][1][0] is Copyable
     # Check that the objects are different
     assert copied[Copyable][1] is not arbitrary_data_structure[Copyable][1]
+
+
+def test_varnames():
+    """
+    Test support with Python varnames,
+    """
+
+    Dark = sentinel.create()
+    Magicks = sentinel.create()
+
+    assert repr(Dark) == "Dark"
+    assert repr(Magicks) == "Magicks"
