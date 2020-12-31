@@ -42,12 +42,12 @@ If you want to create your own sentinels, use this library! Make your calls to
    # Before sentinel:
    missing = object()
    if d.get("c", missing) is missing:
-      ... # do some stuff
+       ... # do some stuff
 
    # After sentinel:
    Missing = sentinel.create()
    if d.get("c", Missing) is Missing:
-      ... # do some stuff
+       ... # do some stuff
 
 
 Features
@@ -118,7 +118,7 @@ entries are missing or unset in a dictionary in a self-documenting way:
 
    Unset = sentinel.create()
    if d.get("stdin", Unset) is Unset:
-      stdin = 0  # some reasonable default
+       stdin = 0  # some reasonable default
 
 
 Adding extra methods and class attributes
