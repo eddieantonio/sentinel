@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+import copy
 import pickle
 
 import pytest
@@ -123,4 +124,21 @@ def test_pickle(tmp_path):
     assert unpickled[Pickleable][1][0] is Pickleable
 
 
-# TODO: test copy() and deepcopy()
+def test_copy():
+    """
+    Tests that copy.deepcopy() works.
+    """
+    Copyable = sentinel.create("Copyable")
+
+    arbitrary_data_structure = {Copyable: (Copyable, [Copyable])}
+
+    copied = copy.deepcopy(arbitrary_data_structure)
+    assert copied is not arbitrary_data_structure
+    assert copied == arbitrary_data_structure
+
+    # Check that the structure is the same
+    assert Copyable in copied
+    assert copied[Copyable][0] is Copyable
+    assert copied[Copyable][1][0] is Copyable
+    # Check that the objects are different
+    assert copied[Copyable][1] is not arbitrary_data_structure[Copyable][1]
