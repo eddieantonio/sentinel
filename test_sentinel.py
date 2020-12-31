@@ -8,6 +8,13 @@ import pytest
 
 import sentinel
 
+try:
+    import varname  # type: ignore
+except ImportError:
+    HAS_VARNAME = False
+else:
+    HAS_VARNAME = True
+
 # Must be defined at module-level due to limitations in how the pickle module works :/
 Pickleable = sentinel.create("Pickleable")
 
@@ -144,9 +151,10 @@ def test_copy():
     assert copied[Copyable][1] is not arbitrary_data_structure[Copyable][1]
 
 
-def test_varnames():
+@pytest.mark.skipif(not HAS_VARNAME, reason="varname PyPI package not installed")
+def test_varname():
     """
-    Test support with Python varnames,
+    Tests infering the variable name. Requires varname library be installed.
     """
 
     Dark = sentinel.create()
