@@ -69,8 +69,8 @@ Create a sentinel:
 
 >>> import sentinel
 >>> MySentinel = sentinel.create("MySentinel")
->>> Sentinel
-Sentinel
+>>> MySentinel
+MySentinel
 
 If you have python-varname_ installed, or installed this module using
 ``pip install 'sentinel[varname]'``, ``sentinel.create()`` can infer the name
