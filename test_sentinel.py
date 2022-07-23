@@ -3,6 +3,7 @@
 
 import copy
 import pickle
+from pathlib import Path
 
 import pytest
 
@@ -17,6 +18,8 @@ else:
 
 # Must be defined at module-level due to limitations in how the pickle module works :/
 Pickleable = sentinel.create("Pickleable")
+
+PACKAGE_ROOT = Path(__file__).parent.resolve()
 
 
 def test_basic_usage():
@@ -154,7 +157,7 @@ def test_copy():
 @pytest.mark.skipif(not HAS_VARNAME, reason="varname PyPI package not installed")
 def test_varname():
     """
-    Tests infering the variable name. Requires varname library be installed.
+    Tests inferring the variable name. Requires varname library be installed.
     """
 
     Dark = sentinel.create()
@@ -162,3 +165,28 @@ def test_varname():
 
     assert repr(Dark) == "Dark"
     assert repr(Magicks) == "Magicks"
+
+
+def test_can_get_instance_from_class():
+    """
+    Tests whether you can retrieve the instance from the class.  I literally
+    don't remember why this is a feature of this package, but it'll be a
+    regression if I remove it, so here we are!
+    """
+    MySentinel = sentinel.create("MySentinel")
+    MySenintelType = type(MySentinel)
+    assert MySenintelType.instance is MySentinel
+
+
+def test_version_number():
+    """
+    Ensure the version number in the package matches what's in the pyproject.toml.
+    """
+    import toml  # type: ignore
+
+    from sentinel import __version__ as version
+
+    config_file = PACKAGE_ROOT / "pyproject.toml"
+    assert config_file.exists()
+    pyproject = toml.load(config_file)
+    assert pyproject["tool"]["poetry"]["version"] == version

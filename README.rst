@@ -85,6 +85,12 @@ from the assignment expression:
    print(MySentinel)  # prints `MySentinel`
 
 
+**NOTE**: this will not work in the interactive console!
+
+>>> import sentinel
+>>> # Fails because varname can't find the source code for the interactive console!
+>>> MySentinel = sentinel.create("MySentinel")
+
 Example
 -------
 
