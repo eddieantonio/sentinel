@@ -318,7 +318,7 @@ varname = ["varname"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "0b0f491ba6ca4f84a67e34776eb2913f16a2e21f0bc6530c9938007ada35e29b"
+content-hash = "3eee41be51bf2bef414547026e11a8ebc439034c394cd37472326ddc116939fb"
 
 [metadata.files]
 appdirs = [
