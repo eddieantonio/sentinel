@@ -162,3 +162,14 @@ def test_varname():
 
     assert repr(Dark) == "Dark"
     assert repr(Magicks) == "Magicks"
+
+
+def test_can_get_instance_from_class():
+    """
+    Tests whether you can retrieve the instance from the class.  I literally
+    don't remember why this is a feature of this package, but it'll be a
+    regression if I remove it, so here we are!
+    """
+    MySentinel = sentinel.create("MySentinel")
+    MySenintelType = type(MySentinel)
+    assert MySenintelType.instance is MySentinel
