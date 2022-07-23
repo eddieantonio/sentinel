@@ -1,7 +1,7 @@
 """
 Create sentinel and singleton objects.
 
-Copyright 2014, 2020, 2022 © Eddie Antonio Santos. MIT licensed.
+Copyright 2014–2022 © Eddie Antonio Santos. MIT licensed.
 
 With contributions from:
  - Simeon Visser (https://github.com/svisser)
