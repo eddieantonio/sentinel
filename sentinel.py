@@ -1,42 +1,34 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 """
 Create sentinel and singleton objects.
 
-Copyright 2014, 2020 © Eddie Antonio Santos. MIT licensed.
+Copyright 2014, 2020, 2022 © Eddie Antonio Santos. MIT licensed.
 
 With contributions from:
  - Simeon Visser (https://github.com/svisser)
  - WildCard65 (https://github.com/WildCard65)
+ - Micael Jarniac (https://github.com/MicaelJarniac)
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT
 """
 
 import inspect
+import typing
 from typing import Any, Dict, Optional, Tuple
 
+# sentinel.create() is the only publically-exposed member of this package.
 __all__ = ["create"]
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 
+# All instances
 _sinstances: Dict[type, object] = {}
 
+# By default, Sentinels inherit from object, but this can be overridden
+# (for some reason that I can't remember anymore).
 _DEFAULT_MRO = (object,)
 
 
-def _get_caller_module() -> Optional[str]:
-    stack = inspect.stack()
-    assert len(stack) > 1
-
-    caller = stack[2][0]
-    return caller.f_globals.get("__name__")
-
-
-def _sentinel_failing_new(cls: type, *args: Tuple[Any, ...], **kwargs: Dict[str, Any]):
-    raise TypeError("This sentinel object can not be allocated more than once")
-
-
+@typing.no_type_check
 def create(
     name: str = None,
     mro: Tuple[type, ...] = _DEFAULT_MRO,
@@ -51,12 +43,12 @@ def create(
     of like the builtin None, and Ellipsis.
 
     Method resolution order (MRO) for the anonymous class can be
-    specified (i.e., it can be a subclass). Provide the mro as tuple of
-    all classes that it inherits from. If only one class, provide a
-    1-tuple: e.g., (Cls,).
+    specified (that is, your new sentinel can be a subclass). Provide
+    the MRO as tuple of all classes that it inherits from. If only one
+    class, provide a 1-tuple: e.g., (Cls,).
 
     Additionally extra class attributes, such as methods can be provided
-    in the cls_dict dict. The following methods are provided, but
+    in cls_dict. The following methods are provided, but
     can be overridden:
 
         __repr__()
@@ -66,13 +58,13 @@ def create(
             Always return the same singleton instance such that
             ``copy(Sentinel) is Sentinel`` is true.
         __reduce__()
-            Provided for proper pickling prowess. That is,
+            Provides proper pickling prowess. That is,
             ``pickle.loads(pickle.dumps(Sentinel)) is Sentinel`` is
             true.
 
-    Finally, the remain arguments and keyword arguments are passed to
+    Finally, the remaining arguments and keyword arguments are passed to
     the super class's __init__().  This is helpful when for
-    instantiating base classes such as a tuple.
+    instantiating base classes such as if you're extending tuple.
     """
 
     if name is None:
@@ -82,12 +74,12 @@ def create(
             raise ImportError(
                 "Cannot infer variable name without varname library; "
                 "please install the varname PyPI package to enable this feature: "
-                "pip install sentinel[varname]"
+                "pip install sentinel[varname]\n"
             ) from error
         name = varname()
 
     _cls_dict = {
-        # make the singleton always belong to the module of its caller.
+        # Make the singleton always belong to the module of its caller.
         # If we don't do this, pickling using __reduce__() will fail!
         "__module__": _get_caller_module(),
         # Provide a nice, clean, self-documenting __repr__
@@ -107,27 +99,59 @@ def create(
         # Validate if object is the last type in the provided mro list.
         assert mro[-1] is object, "object should ALWAYS the last type in a mro"
 
-    class _SentinelMeta(type(mro[0])):  # Inherit from the base type of the first type.
+    # The sentinel's meta class.
+    # Normally, you shouldn't have access to this unless you're being sneaky:
+    # >>> MySentinel = sentinel.create("MySentinel")
+    # >>> type(type(MySentinel))
+    # (don't do this.)
+    class _SentinelMeta(
+        # Inherit from the base type of the first type:
+        type(mro[0])
+    ):
+        # Allows you to get the singleton instance from the Sentinel's class.
+        # >>> type(Sentinel).instance == Sentinel
+        # (I have no idea why I though this was necessary).
         instance = property(
             fget=_sinstances.get, doc="""Gets the instance of this sentinel type."""
         )
 
+        # Ensure that every call to the Sentinel's class just returns the singleton
+        # instance:
         def __call__(self, *args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> object:
             try:
                 return _sinstances[self]
             except KeyError:
-                inst = super().__call__(
-                    *args, **kwargs
-                )  # We use super() incase __call__ was overriden.
-                _sinstances[self] = inst
+                # We use super() in case __call__ was overriden:
+                instance = super().__call__(*args, **kwargs)
+                _sinstances[self] = instance
 
-                return inst
+                return instance
 
     if cls_dict is not None:
         _cls_dict.update(cls_dict)
     _sentinel = _SentinelMeta("_Sentinel", mro, _cls_dict)
 
-    inst = _sentinel(*args, **kwargs)
+    instance = _sentinel(*args, **kwargs)
     _sentinel.__new__ = _sentinel_failing_new
 
-    return inst
+    return instance
+
+
+def _get_caller_module() -> Optional[str]:
+    """
+    Return the module name of the caller of sentinel.create().
+    """
+    stack = inspect.stack()
+    assert len(stack) > 1
+
+    caller = stack[2][0]
+    return caller.f_globals.get("__name__")
+
+
+def _sentinel_failing_new(cls: type, *args: Tuple[Any, ...], **kwargs: Dict[str, Any]):
+    """
+    Implementation of __new__ that always throws a TypeError.  Sentinels *must* be
+    singleton instances, so instantiating a new sentinel with __new__ is a big no-no, so
+    we disable it. Don't do it!
+    """
+    raise TypeError("This sentinel object can not be allocated more than once")

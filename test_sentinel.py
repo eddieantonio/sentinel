@@ -154,7 +154,7 @@ def test_copy():
 @pytest.mark.skipif(not HAS_VARNAME, reason="varname PyPI package not installed")
 def test_varname():
     """
-    Tests infering the variable name. Requires varname library be installed.
+    Tests inferring the variable name. Requires varname library be installed.
     """
 
     Dark = sentinel.create()
